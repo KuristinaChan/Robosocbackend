@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Member</title>
+    <link rel="stylesheet" href="index.css">
+</head>
+<body>
+    <div class="main-body">
+        <h2>Add Member</h2>
+        <form class="form" enctype="multipart/form-data" onsubmit="handleSubmit(event)">
+            <input type="text" placeholder="Member Name" name="name" required="true">
+            <select name="isActive" title="Member-Type" onchange="handleActiveChange(event)">
+                <option value = "false">Alumni</option>
+                <option value = "true">Member</option>
+            </select>
+            <select name="position" title="Position">
+                <option value="president">President</option>
+                <option value="vice president">Vice-President</option>
+                <option value="secretary">General Secretary</option>
+                <option value="treasurer">Treasurer</option>
+                <option value="mechanical head">Mechanical Head</option>
+                <option value="electronics head">Electronics Head</option>
+                <option value="programming head">Programming Head</option>
+                <option value="pr head">PR Head</option>
+                <option value= "external affairs head">External Affairs Head</option>
+                <option value="core coordinator">Core Coordinator</option>
+                <option value="coordinator">Coordinator</option>
+                <option value="executive">Executive</option>
+            </select>
+            <input type = "text" placeholder="Tech Stack" name="techStack">
+            <input type = "text" placeholder="Company" name="company">
+            <input type = "file" placeholder="Image" id="inputFile"  onchange="handleChange(event)" name="imgFile">
+            <input type="text" placeholder="Image" onclick="handleClick()"name="file" id="fileName" readonly="true">
+            <input type = "number" placeholder="Passout Year" required = true name = "passOutYear">
+            <input type = "url" placeholder="Linkedin Link" name="linkedinLink">
+            <input type = "url" placeholder="Github Link" name="githubLink">
+            <input type = "url" placeholder="Insta Link" name="instaLink">
+            <button type="submit">Add</button>
+        </form>
+    </div>
+    <script>
+        let x = document.getElementById('inputFile')
+        let y = document.getElementById
+        let file = ""
+        x.style.display = "none"
+        let handleClick = ()=>{
+            x.click()
+        }
+        let handleActiveChange = (e)=>{
+            let companyInput = document.getElementsByTagName('form')[0].company
+            document.getElementsByTagName('form')[0].isActive = e.target.value
+            if(e.target.value==="false"){
+                companyInput.style.display = "block"
+            }
+            else{
+                companyInput.style.display = "none"
+            }
+        }
+        let handleChange = (e)=>{
+            if(e.target.files[0]===undefined){
+                return;
+            }
+            if(e.target.files[0]?.name){
+                let name = e.target.files[0].name.split('.')
+                if(name[name.length-1]!=='png' && name[name.length-1]!=='jpg' && name[name.length-1]!=='jpeg'){
+                    e.target.value = null
+                    alert('Only png , jpeg & jpg files are allowed')
+                    return
+                }
+            }
+            document.getElementById('fileName').value = e.target.files[0].name
+            file = e.target.files[0]
+        }
+        let handleSubmit = (e)=>{
+            e.preventDefault()
+            let formData = new FormData()
+            let form = e.target
+            formData.append("name",form.name.value)
+            formData.append("isActive",form.isActive.value)
+            formData.append("position", form.position.value.trim())
+            formData.append("techStack",form.techStack.value.trim())
+            formData.append("image",file)
+            if(form.isActive.value===false){
+                formData.append("company",form.company.value)
+            }
+            formData.append("passOutYear",form.passOutYear.value)
+            formData.append("linkedinLink",form.linkedinLink.value)
+            formData.append("instaLink",form.instaLink.value)
+            formData.append("githubLink",form.githubLink.value)
+            if(!form.name.value || !form.passOutYear.value || !file){
+                alert("Fill all the mandatory details name, passout year & image")
+                return
+            }
+            fetch("/api/members", {
+                method: "POST",
+                body: formData,
+            })
+            .then(response => {
+                if(!response.ok){
+                    if(response.status===403){
+                        throw new Error('Access to requested resource is for admin only. Login as admin to access the resource')
+                    }
+                    throw new Error('Service is currently down.Try Again Later')
+                }
+                alert('Member Added')
+                let inputs = document.querySelectorAll('input');
+                inputs.forEach(input => {
+                    input.value = '';
+                });
+                let selects = document.querySelectorAll('select');
+                selects.forEach(select =>{
+                    let firstOption = select.querySelector('option');
+                    if (firstOption) {
+                        select.value = firstOption.value;
+                    }
+                })
+                return response.json()
+            })
+            .then(data => console.log(data))
+            .catch(error => {
+                console.error(error)
+                alert(error.message)
+            })
+        }
+    </script>
+</body>
+</html>
